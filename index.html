@@ -1,0 +1,472 @@
+<!DOCTYPE>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Badminton</title>
+    <script src="https://code.jquery.com/jquery-3.4.0.slim.min.js"></script>
+    <script>
+        // make [].shuffle() chainable
+        Array.prototype.shuffle = function () {
+            var i = this.length;
+            while (i) {
+                var j = Math.floor(Math.random() * i);
+                var t = this[--i];
+                this[i] = this[j];
+                this[j] = t;
+            }
+            return this;
+        }
+
+        const GAME = {
+            /* 玩家
+            [
+                {
+                    name,
+                    playCount: 0
+                    isPlaying: false,
+                    active: true,
+                },
+            ]
+            */
+            players: [],
+
+            /* 場地
+            [
+                {
+                    index: 0,
+                    players: [],
+                },
+            ]
+            */
+            courts: [],
+
+            /**
+             *  加場地
+             *  @return {Court} - 加入的場地資料
+             */
+            addCourt() {
+                var court = {
+                    id: this.courts.length == 0 ? 0 : (this.courts.sort((a, b) => b.id - a.id)[0].id + 1),
+                    players: [],
+                }
+                this.courts.push(court)
+                return court
+            },
+
+            /**
+             *  移除空場地
+             *  @return {Court} - 被移除的場地資料
+             */
+            removeEmptyCourt() {
+                var index = this.courts.findIndex(c => c.players.length == 0)
+                if (index >= 0) {
+                    return this.courts.splice(index, 1)[0];
+                }
+
+                return undefined;
+            },
+
+            /**
+             *  遊戲結束
+             *  @param {Number} id - 場地編號
+             *  @return {Array} - 那一場的玩家
+             */
+            gameFinish(id) {
+                var court = this.courts.find(c => c.id == id);
+                if (court) {
+                    var players = court.players.splice(0);
+                    players.forEach(p => p.isPlaying = false);
+                    return players;
+                } else {
+                    console.log('court index error', courtIndex);
+                    return [];
+                }
+            },
+
+            /**
+             *  下一輪的遊戲
+             *  @return {Court[]} - 補上玩家的場地資料array
+             */
+            nextGame() {
+                var emptyCourts = this.courts.filter(c => c.players.length == 0);
+
+                var freePlayers = this.findPlayers(emptyCourts.length);
+
+                // 人能塞幾場
+                var fillCourtCount = Math.floor(freePlayers.length / 4);
+
+                freePlayers = freePlayers
+                    .slice(0, fillCourtCount * 4)
+                    .shuffle();
+
+                var courts = emptyCourts.slice(0, fillCourtCount);
+
+                courts.forEach(c => {
+                    freePlayers
+                        .splice(0, 4)
+                        .forEach(p => {
+                            c.players.push(p);
+                            p.isPlaying = true;
+                            p.playCount++;
+                        });
+
+                    console.log('court', c.id, ', players', c.players);
+                });
+
+                return courts;
+            },
+
+            /**
+             *  找閒置的玩家, 依玩過的場次少到多排序, 同樣場次玩家們會做random
+             *  @return {Player[]} - 閒置的玩家
+             */
+            findPlayers() {
+                var courtCount = this.courts.filter(c => c.players.length == 0).length;
+
+                return this.players
+                    .filter(p => !p.isPlaying)                      // 放空的人
+                    .reduce((ary, p) => {
+                        /* 
+                            照場次放到籃子裡面, array index x 表示玩過x 場的玩家們
+                            [
+                                [{玩過0次},{玩過0次}],
+                                ,
+                                [{玩過2次}]
+                                ,
+                                ,
+                                [{玩過5次},{玩過5次},{玩過5次},{玩過5次}],
+                            ]
+                        */
+                        var index = p.playCount;
+                        (ary[index] = ary[index] || []).push(p);
+                        return ary;
+                    }, [])
+                    .reduce((ary, players) => {
+                        // 人數不夠就把下一籃的人random 後倒進去, 砍掉超過的部分
+                        if (ary.length < courtCount * 4) {
+                            ary.push(...players.shuffle())
+                            return ary.slice(0, courtCount * 4);
+                        }
+
+                        return ary;
+                    }, [])
+            },
+
+            _mockingData() {
+                this.players = 'ABCDEFG'.split('')
+                    .map(name => ({
+                        name,
+                        playCount: Math.floor(Math.random() * 3),
+                        isPlaying: false,
+                        active: true,
+                    }));
+
+                this.addCourt();
+                this.addCourt();
+            },
+        };
+        //GAME._mockingData()
+        console.log(GAME);
+
+        function getPlayersFromUI() {
+            GAME.players.length = 0;
+
+            $('table.players tbody tr').each(function () {
+                var $tr = $(this);
+                var active = $tr.find('.active').prop('checked');
+                var name = $tr.find('.name').val().trim();
+
+                if (active && name.length > 0) {
+                    var isPlaying = $tr.find('.court').val().length > 0;
+
+                    // playCount 會當array index, 不允許負值
+                    var playCount = parseInt($tr.find('.playCount').val().trim(), 10) || 0;
+                    playCount = Math.max(playCount, 0);
+
+                    GAME.players.push({
+                        name,
+                        isPlaying,
+                        playCount,
+                    })
+                }
+            });
+
+            console.log('getPlayersFromUI', GAME.players)
+        }
+
+        function fillDefaultPlayers() {
+            var $tr = $('table.players tbody tr');
+
+            [
+                { name: 'Jack', active: true },
+                { name: '逸涵', active: true },
+                { name: 'Flora', active: true },
+                { name: 'Simon', active: true },
+                { name: 'Fred', active: true },
+                { name: 'Eric', active: true },
+                { name: '書汶', active: true },
+                { name: 'Dennis', active: true },
+                { name: 'Tony', active: true },
+                { name: 'Bryan', active: true },
+                { name: 'Amy', active: true },
+                { name: 'Eason', active: true },
+                { name: 'Landice', active: true },
+
+                { name: 'FS', active: false },
+                { name: 'Rex', active: false },
+                { name: 'Hester', active: false },
+                { name: 'Smart', active: false },
+                { name: '黑黑', active: false },
+                { name: 'Andy.Li', active: false },
+                { name: 'Charlotte', active: false },
+                { name: 'Julie', active: false },
+                { name: 'Irina', active: false },
+                { name: 'Yuki', active: false },
+                { name: 'Sasha', active: false },
+                { name: 'Crystal', active: false },
+            ].forEach(p => {
+                var clone = $tr.clone()
+                    .find('.active').prop('checked', p.active).end()
+                    .find('.playCount').val(0).end()
+                    .find('.name').val(p.name).end()
+
+                $tr.before(clone);
+            })
+        }
+
+        function findRowByPlayerName(name) {
+            var tr = $('table.players tbody input:text.name').filter(function () {
+                return this.value.trim() == name;
+            }).closest('tr');
+
+            return tr;
+        }
+
+        $(document).ready(function () {
+            // 從預設值填到玩家UI
+            fillDefaultPlayers();
+
+            // 場地編輯
+            $('input.courtEdit').click(function () {
+                var add = parseInt(this.dataset.num, 10) > 0;
+                if (add) {
+                    var court = GAME.addCourt();
+
+                    var $div = $('div.court:first')
+                    var $clone = $div.clone()
+                        .attr('id', court.id)
+                        .find('.player').each(function () { $(this).text(''); }).end()
+                        .find('.finish').hide().end()
+                        .show();
+
+                    $div.parent().append($clone);
+                } else {
+                    var court = GAME.removeEmptyCourt();
+
+                    if (court) {
+                        $('div.court')
+                            .filter(function () {
+                                return $(this).attr('id') == court.id;
+                            })
+                            .remove();
+                    }
+                }
+            });
+
+            // 一開始幫他按兩場
+            $('input.courtEdit[data-num="1"]')
+                .trigger('click')
+                .trigger('click');
+
+            // 下一場遊戲 按鈕
+            $('#nextGame').click(function () {
+                getPlayersFromUI();
+
+                // 結束按鈕都關閉
+                $('div.courts .finish').hide();
+
+                GAME.nextGame()
+                    .forEach(court => {
+                        // 整理場地UI
+                        $('div.court')
+                            .filter(function () {
+                                return $(this).attr('id') == court.id;
+                            })
+                            .find('.player')
+                            .each(function (i) {
+                                $(this).text(court.players[i].name)
+                            })
+
+                        // 整理玩家UI
+                        court.players.forEach(player => {
+                            findRowByPlayerName(player.name)
+                                .find('input').prop('disabled', true).end()         // 不能編輯那個玩家
+                                .find('.isPlaying').prop('checked', true).end()     // 正在玩
+                                .find('.court').val(court.id).end()                 // 哪個場地
+                                .find('.playCount').val(player.playCount).end()     // 玩幾場了
+                        })
+                    })
+
+            })
+
+            // 編輯最後一行幫他加新row
+            $('table').on('change', 'input.name', function () {
+                var $tr = $(this).closest('tr');
+                var isEmpty = this.value.trim().length == 0;
+                var isLast = $tr.is(':last-child');
+
+                if (!isEmpty && isLast) {
+                    var clone = $tr.clone()
+                        .find('.playCount').val(0).end()
+                        .find('.name').val('').end()
+
+                    $tr.after(clone);
+                }
+            });
+
+            // 計算總人數
+            $('table').on('change', 'input.active, input.name', function () {
+                var validRows = $('table.players tbody tr').filter(function () {
+                    var $tr = $(this);
+                    var active = $tr.find('.active').prop('checked');
+                    var name = $tr.find('.name').val().trim();
+
+                    return active && name.length > 0
+                });
+
+                $('input.total').val(validRows.length)
+            });
+
+            // trigger 計算總人數
+            $('input.active:first').trigger('change');
+
+            // 場地 顯示[結束按鈕]
+            $('div.courts').on('click', 'div.court', function () {
+                $(this).find('.finish').toggle();
+            })
+
+            // 場地 [結束按鈕]
+            $('div.courts').on('click', '.finish', function (event) {
+                // prevent div.court trigger click event
+                event.stopPropagation();
+
+                var $court = $(this).closest('div.court');
+                var courtId = $court.attr('id');
+                console.log('finish', courtId);
+
+                // 整理場地UI
+                $court
+                    .find('.finish').hide().end()
+                    .find('.player').each(function () {
+                        $(this).text('')
+                    })
+
+                // 整理玩家UI
+                GAME.gameFinish(courtId)
+                    .forEach(player => {
+                        // 整理玩家UI
+                        findRowByPlayerName(player.name)
+                            .find('input.editable').prop('disabled', false).end()   // 可以編輯
+                            .find('.isPlaying').prop('checked', false).end()        // 正在玩
+                            .find('.court').val('').end()                           // 場地
+                    })
+            })
+        });
+    </script>
+</head>
+
+<body>
+    <div class="players float">
+        <p>
+            Total: <input type="text" class="total" disabled>
+        </p>
+        <table class="players">
+            <thead>
+                <th>加</th>
+                <th>誰</th>
+                <!-- <th>打</th> -->
+                <th>場</th>
+                <!-- <th>猜</th> -->
+                <th>量</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="checkbox" class="active editable"></td>
+                    <td><input type="text" class="name editable"></td>
+                    <!-- <td><input type="checkbox" class="isPlaying" disabled></td> -->
+                    <td><input type="text" class="court" disabled></td>
+                    <!-- <td><input type="checkbox" class="guess" disabled></td> -->
+                    <td><input type="text" class="playCount editable" value="0"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="courts float">
+        <div class="courtControl">
+            <input type="button" value="多" class="courtEdit" data-num="1">
+            <input type="button" value="少" class="courtEdit" data-num="-1">
+        </div>
+
+        <input type="button" value="打" id="nextGame">
+
+        <div class="court" style="display:none;">
+            <input type="button" value="終" class="finish">
+            <div class="team">
+                <span class="player"></span>
+                <span class="player"></span>
+            </div>
+            <span>vs</span>
+            <div class="team">
+                <span class="player"></span>
+                <span class="player"></span>
+            </div>
+        </div>
+
+    </div>
+</body>
+<style>
+    body {
+        overscroll-behavior: contain;
+    }
+
+    input[type=text] {
+        width: 30px;
+    }
+
+    input.name {
+        width: 100px;
+    }
+
+    input:not(.name) {
+        text-align: center;
+    }
+
+    div {
+        padding: 10px;
+    }
+
+    div.float {
+        float: left;
+    }
+
+    div.courts {
+        background: #aa8c39;
+        text-align: center;
+    }
+
+    div.court {
+        border: solid 1px black;
+        background-color: #d4b86a;
+        margin: 10px;
+    }
+
+    div.team {
+        background-color: #ffe8aa;
+        min-height: 20px;
+        min-width: 150px;
+    }
+</style>
+
+</html>
