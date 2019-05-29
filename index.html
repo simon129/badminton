@@ -515,11 +515,12 @@
 
     <div class="courts float">
         <div class="courtControl">
-            <input type="button" value="多" class="courtEdit" data-num="1">
-            <input type="button" value="少" class="courtEdit" data-num="-1">
+			<label for="add court">場</label>
+            <input id="add court" type="button" value="+" class="courtEdit" data-num="1">
+            <input type="button" value="-" class="courtEdit" data-num="-1">
         </div>
 
-        <input type="button" value="打" id="nextGame">
+        <input type="button" value="下一場" id="nextGame">
 
         <div class="court" style="display:none;">
             <input type="button" value="終" class="finish">
@@ -527,7 +528,7 @@
                 <span class="player"></span>
                 <span class="player"></span>
             </div>
-            <span>vs</span>
+            <!-- <span>vs</span> -->
             <div class="team">
                 <span class="player"></span>
                 <span class="player"></span>
@@ -566,18 +567,20 @@
     }
 
     div.courts {
-        background: #aa8c39;
+        background: #2E8748;
         text-align: center;
     }
 
     div.court {
-        border: solid 1px black;
-        background-color: #d4b86a;
+        <!-- border: solid 2px white; -->
+        background-color: #2E8748;
         margin: 10px;
     }
 
     div.team {
-        background-color: #ffe8aa;
+		border: solid 2px #EBFFF0;
+        background-color: #2E8748;
+		color: #1B1D1B;
         min-height: 20px;
         min-width: 150px;
     }
