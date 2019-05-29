@@ -3,20 +3,21 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Badminton</title>
+    <title>Badminton V1905271000</title>
     <script src="https://code.jquery.com/jquery-3.4.0.slim.min.js"></script>
     <script>
-        // make [].shuffle() chainable
-        Array.prototype.shuffle = function () {
-            var i = this.length;
-            while (i) {
-                var j = Math.floor(Math.random() * i);
-                var t = this[--i];
-                this[i] = this[j];
-                this[j] = t;
-            }
-            return this;
-        }
+        // 不知為何會影響 For/In Loop, 因此先拿掉.
+        // make [].shuffle() chainable 
+        //Array.prototype.shuffle = function () {
+        //    var i = this.length;
+        //    while (i) {
+        //        var j = Math.floor(Math.random() * i);
+        //        var t = this[--i];
+        //        this[i] = this[j];
+        //        this[j] = t;
+        //    }
+        //    return this;
+        //}
 
         const GAME = {
             /* 玩家
@@ -26,6 +27,7 @@
                     playCount: 0
                     isPlaying: false,
                     active: true,
+					paired: [name,name,..]
                 },
             ]
             */
@@ -76,7 +78,7 @@
                 var court = this.courts.find(c => c.id == id);
                 if (court) {
                     var players = court.players.splice(0);
-                    players.forEach(p => p.isPlaying = false);
+                    players.forEach(p => p.isPlaying = false)
                     return players;
                 } else {
                     console.log('court index error', courtIndex);
@@ -90,15 +92,28 @@
              */
             nextGame() {
                 var emptyCourts = this.courts.filter(c => c.players.length == 0);
+				if(emptyCourts < 1)
+					return
 
-                var freePlayers = this.findPlayers(emptyCourts.length);
+				var freePlayers = this.findPlayersVer2()
+				if(freePlayers.length < 4) {
+					console.log("!!!組不起來, 清除配對資料, 重新來過!!!")
+					this.players.forEach(p => p.paired = [])
+					freePlayers = this.findPlayersVer2()
+				}
+				
+                var fillCourtCount = 1;
+				
+				//if(freePlayers.length !== 4) { // 新模組沒有好選項就 fallback 舊模組
+				//	freePlayers = this.findPlayers(emptyCourts.length)
+				//}
 
                 // 人能塞幾場
                 var fillCourtCount = Math.floor(freePlayers.length / 4);
 
-                freePlayers = freePlayers
-                    .slice(0, fillCourtCount * 4)
-                    .shuffle();
+                //freePlayers = freePlayers
+                    //.slice(0, fillCourtCount * 4)
+                    //.shuffle();
 
                 var courts = emptyCourts.slice(0, fillCourtCount);
 
@@ -110,12 +125,101 @@
                             p.isPlaying = true;
                             p.playCount++;
                         });
+					
+					// 紀錄組隊資料
+					var ps = c.players
+					ps[0].paired.push(ps[1].name)
+					ps[1].paired.push(ps[0].name)
+					ps[2].paired.push(ps[3].name)
+					ps[3].paired.push(ps[2].name)
 
                     console.log('court', c.id, ', players', c.players);
                 });
 
                 return courts;
             },
+			
+			findTeammate(starter, players, blockedPlayers) {
+				return this.findNonBlockedPlayers(players, blockedPlayers).filter(p => !starter.paired.includes(p.name))
+			},
+			
+			findNonBlockedPlayers(players, blockedPlayers) {
+				return players.filter(p => !blockedPlayers.includes(p))
+			},
+			
+			findEnemiesByTeammate(teammate, players, selectedPlayers) {
+				var tempSelected = selectedPlayers.slice()
+				tempSelected.push(teammate) // 暫時把這名隊友加入已被選擇的隊列中
+				
+				var enemies = this.findNonBlockedPlayers(players, tempSelected) // 篩選出可能作為敵人的人
+
+				if(enemies.length < 2) { // 敵人人選不足直接跳過
+					return []
+				}
+				
+				for(var k in enemies) {
+					var enemy = enemies[k]
+					var tempBlockForEnemy = tempSelected.slice()
+					tempBlockForEnemy.push(enemy)
+					
+					var enemyTeammates = this.findTeammate(enemy, players, tempBlockForEnemy)
+					if(enemyTeammates.length < 1) {
+						continue
+					} else {
+						return [enemy, enemyTeammates[0]] // [敵人, 敵人的隊友]
+					}
+				}
+			},
+			
+			findMatchPlayersByStarter(starter, players) {
+				var blocked = [starter]
+				
+				var teammates = this.findTeammate(starter, players, blocked) // 先找出可能成為隊友的清單
+				if(teammates.length < 1) { // 沒有可用的隊友, 直接放棄
+					return []
+				}
+				
+				for(var k in teammates) { // 依序嘗試配對每個清單中的人
+					var teammate = teammates[k]
+					
+					var enemies = this.findEnemiesByTeammate(teammate, players, blocked)
+					if(enemies.length < 2) // 數量小於2表示沒有找到適合人選
+						continue
+
+					return [starter, teammate, enemies[0], enemies[1]] // [起始者, 起始者隊友, 對手A, 對手B]
+				}
+				
+				// 都沒有適合的組合, 回傳空陣列
+				return []
+			},
+			
+			findPlayersVer2() {
+				var idlePlayers = this.players.filter(p => !p.isPlaying)                      // 挑出放空的人, 同時複製一份新陣列
+				
+				if(idlePlayers.length < 4){ // 人數不足
+					return []
+				}
+				
+				var sortedIdlePlayers = idlePlayers.sort((a,b) => {
+															if(a.playCount !== b.playCount){ // 次數最少的人最優先
+																return a.playCount - b.playCount
+															} else if (a.paired.length !== b.paired.length) {
+																return a.paired.length - b.paired.length // 第二篩選曾經配過人數最低者優先
+															} else {
+																return Math.random() - 0.5 // 隨機排序
+															}
+														});
+
+				for(var k in sortedIdlePlayers) {
+					var starter = sortedIdlePlayers[k]
+					var finalPlayers = this.findMatchPlayersByStarter(starter, sortedIdlePlayers)
+
+					if(finalPlayers.length === 4)
+						return finalPlayers
+				}
+				
+				return []
+			},
 
             /**
              *  找閒置的玩家, 依玩過的場次少到多排序, 同樣場次玩家們會做random
@@ -160,6 +264,7 @@
                         playCount: Math.floor(Math.random() * 3),
                         isPlaying: false,
                         active: true,
+						paired: []
                     }));
 
                 this.addCourt();
@@ -183,11 +288,13 @@
                     // playCount 會當array index, 不允許負值
                     var playCount = parseInt($tr.find('.playCount').val().trim(), 10) || 0;
                     playCount = Math.max(playCount, 0);
+					var paired = $tr.find('.paired').val().trim().split(',')
 
                     GAME.players.push({
                         name,
                         isPlaying,
                         playCount,
+						paired
                     })
                 }
             });
@@ -305,6 +412,7 @@
                                 .find('.isPlaying').prop('checked', true).end()     // 正在玩
                                 .find('.court').val(court.id).end()                 // 哪個場地
                                 .find('.playCount').val(player.playCount).end()     // 玩幾場了
+                                .find('.paired').val(player.paired.join()).end()    // 紀錄已配對資料
                         })
                     })
 
@@ -389,6 +497,7 @@
                 <th>場</th>
                 <!-- <th>猜</th> -->
                 <th>量</th>
+				<th>配</th>
             </thead>
             <tbody>
                 <tr>
@@ -398,6 +507,7 @@
                     <td><input type="text" class="court" disabled></td>
                     <!-- <td><input type="checkbox" class="guess" disabled></td> -->
                     <td><input type="text" class="playCount editable" value="0"></td>
+                    <td><input type="text" class="paired" value=""></td>
                 </tr>
             </tbody>
         </table>
@@ -441,6 +551,10 @@
 
     input:not(.name) {
         text-align: center;
+    }
+    
+    input.paired {
+        width: 200px;
     }
 
     div {
