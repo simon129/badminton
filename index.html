@@ -6,19 +6,6 @@
     <title>Badminton V1905271000</title>
     <script src="https://code.jquery.com/jquery-3.4.0.slim.min.js"></script>
     <script>
-        // 不知為何會影響 For/In Loop, 因此先拿掉.
-        // make [].shuffle() chainable 
-        //Array.prototype.shuffle = function () {
-        //    var i = this.length;
-        //    while (i) {
-        //        var j = Math.floor(Math.random() * i);
-        //        var t = this[--i];
-        //        this[i] = this[j];
-        //        this[j] = t;
-        //    }
-        //    return this;
-        //}
-
         const GAME = {
             /* 玩家
             [
@@ -91,7 +78,8 @@
              *  @return {Court[]} - 補上玩家的場地資料array
              */
             nextGame() {
-                var emptyCourts = this.courts.filter(c => c.players.length == 0);
+                var emptyCourts = this.courts.filter(c => c.players.length == 0)
+				
 				if(emptyCourts < 1)
 					return
 
@@ -99,44 +87,29 @@
 				if(freePlayers.length < 4) {
 					console.log("!!!組不起來, 清除配對資料, 重新來過!!!")
 					this.players.forEach(p => p.paired = [])
-					freePlayers = this.findPlayersVer2()
+					this.nextGame()
 				}
-				
-                var fillCourtCount = 1;
-				
-				//if(freePlayers.length !== 4) { // 新模組沒有好選項就 fallback 舊模組
-				//	freePlayers = this.findPlayers(emptyCourts.length)
-				//}
 
-                // 人能塞幾場
-                var fillCourtCount = Math.floor(freePlayers.length / 4);
+				var c = emptyCourts[0]
 
-                //freePlayers = freePlayers
-                    //.slice(0, fillCourtCount * 4)
-                    //.shuffle();
+				freePlayers
+					.splice(0, 4)
+					.forEach(p => {
+						c.players.push(p)
+						p.isPlaying = true
+						p.playCount++
+					})
 
-                var courts = emptyCourts.slice(0, fillCourtCount);
+				// 紀錄組隊資料
+				var ps = c.players
+				ps[0].paired.push(ps[1].name)
+				ps[1].paired.push(ps[0].name)
+				ps[2].paired.push(ps[3].name)
+				ps[3].paired.push(ps[2].name)
 
-                courts.forEach(c => {
-                    freePlayers
-                        .splice(0, 4)
-                        .forEach(p => {
-                            c.players.push(p);
-                            p.isPlaying = true;
-                            p.playCount++;
-                        });
-					
-					// 紀錄組隊資料
-					var ps = c.players
-					ps[0].paired.push(ps[1].name)
-					ps[1].paired.push(ps[0].name)
-					ps[2].paired.push(ps[3].name)
-					ps[3].paired.push(ps[2].name)
+				console.log('court', c.id, ', players', c.players)
 
-                    console.log('court', c.id, ', players', c.players);
-                });
-
-                return courts;
+                return [c].concat(emptyCourts.length > 1 ? this.nextGame() : [])
             },
 			
 			findTeammate(starter, players, blockedPlayers) {
@@ -200,15 +173,16 @@
 					return []
 				}
 				
-				var sortedIdlePlayers = idlePlayers.sort((a,b) => {
-															if(a.playCount !== b.playCount){ // 次數最少的人最優先
-																return a.playCount - b.playCount
-															} else if (a.paired.length !== b.paired.length) {
-																return a.paired.length - b.paired.length // 第二篩選曾經配過人數最低者優先
-															} else {
-																return Math.random() - 0.5 // 隨機排序
-															}
-														});
+				var sortedIdlePlayers = idlePlayers
+											.sort((a,b) => {
+												if(a.playCount !== b.playCount){ // 次數最少的人最優先
+													return a.playCount - b.playCount
+												} else if (a.paired.length !== b.paired.length) {
+													return a.paired.length - b.paired.length // 第二篩選曾經配過人數最低者優先
+												} else {
+													return Math.random() - 0.5 // 隨機排序
+												}
+											});
 
 				for(var k in sortedIdlePlayers) {
 					var starter = sortedIdlePlayers[k]
@@ -220,42 +194,6 @@
 				
 				return []
 			},
-
-            /**
-             *  找閒置的玩家, 依玩過的場次少到多排序, 同樣場次玩家們會做random
-             *  @return {Player[]} - 閒置的玩家
-             */
-            findPlayers() {
-                var courtCount = this.courts.filter(c => c.players.length == 0).length;
-
-                return this.players
-                    .filter(p => !p.isPlaying)                      // 放空的人
-                    .reduce((ary, p) => {
-                        /* 
-                            照場次放到籃子裡面, array index x 表示玩過x 場的玩家們
-                            [
-                                [{玩過0次},{玩過0次}],
-                                ,
-                                [{玩過2次}]
-                                ,
-                                ,
-                                [{玩過5次},{玩過5次},{玩過5次},{玩過5次}],
-                            ]
-                        */
-                        var index = p.playCount;
-                        (ary[index] = ary[index] || []).push(p);
-                        return ary;
-                    }, [])
-                    .reduce((ary, players) => {
-                        // 人數不夠就把下一籃的人random 後倒進去, 砍掉超過的部分
-                        if (ary.length < courtCount * 4) {
-                            ary.push(...players.shuffle())
-                            return ary.slice(0, courtCount * 4);
-                        }
-
-                        return ary;
-                    }, [])
-            },
 
             _mockingData() {
                 this.players = 'ABCDEFG'.split('')
@@ -520,7 +458,7 @@
             <input type="button" value="-" class="courtEdit" data-num="-1">
         </div>
 
-        <input type="button" value="下一場" id="nextGame">
+        <input type="button" value="配" id="nextGame">
 
         <div class="court" style="display:none;">
             <input type="button" value="終" class="finish">
@@ -548,10 +486,12 @@
 
     input.name {
         width: 100px;
+		color: #1B1D1B;
     }
 
     input:not(.name) {
         text-align: center;
+		color: #1B1D1B;
     }
     
     input.paired {
