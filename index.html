@@ -1,9 +1,10 @@
+<!-- https://stackoverflow.com/questions/6262472/multiple-lines-of-input-in-input-type-text -->
 <!DOCTYPE>
 <html>
 
 <head>
     <meta charset="UTF-8">
-    <title>Badminton V1905271000</title>
+    <title>Badminton v1906261700</title>
     <script src="https://code.jquery.com/jquery-3.4.0.slim.min.js"></script>
     <script>
         const GAME = {
@@ -418,6 +419,33 @@
                             .find('.court').val('').end()                           // 場地
                     })
             })
+			
+			// 球員快速導入功能
+			$('#importPlayerButton').click(function () {
+				var data = document.querySelector("#playerNameData").value
+				console.log("get player data : " + data)
+				var startPos = data.indexOf('):')
+				var endPos = data.indexOf('===')
+				if(startPos < 0 || endPos < 0){
+					alert('格式不符!!')
+				} else {
+					var players = data.substring(startPos+2, endPos)
+										.split('\n')
+										.filter(n => n !== "" && n.indexOf(':') === -1)
+					console.log(players)
+					
+					var playerRows = document.querySelectorAll('table.players tbody tr')
+					for(var i=0; i< playerRows.length; i++){
+						var hasMappingName = i < players.length
+						var name = hasMappingName ? players[i] : i.toString()
+						//console.log("index:" + i +"'s name is " + name)
+						playerRows[i].querySelector(".active").checked = hasMappingName
+						playerRows[i].querySelector(".name").value = name
+					}
+					
+					$('input.active:first').trigger('change')
+				}
+			})
         });
     </script>
 </head>
@@ -427,13 +455,14 @@
         <p>
             Total: <input type="text" class="total" disabled>
         </p>
+		<p>
+			import players:  <textarea id="playerNameData" cols="20" rows="5"></textarea> <input type="button" value="import!" id="importPlayerButton">
+		</p>
         <table class="players">
             <thead>
                 <th>加</th>
                 <th>誰</th>
-                <!-- <th>打</th> -->
                 <th>場</th>
-                <!-- <th>猜</th> -->
                 <th>量</th>
 				<th>配</th>
             </thead>
@@ -441,9 +470,7 @@
                 <tr>
                     <td><input type="checkbox" class="active editable"></td>
                     <td><input type="text" class="name editable"></td>
-                    <!-- <td><input type="checkbox" class="isPlaying" disabled></td> -->
                     <td><input type="text" class="court" disabled></td>
-                    <!-- <td><input type="checkbox" class="guess" disabled></td> -->
                     <td><input type="text" class="playCount editable" value="0"></td>
                     <td><input type="text" class="paired" value=""></td>
                 </tr>
@@ -466,7 +493,6 @@
                 <span class="player"></span>
                 <span class="player"></span>
             </div>
-            <!-- <span>vs</span> -->
             <div class="team">
                 <span class="player"></span>
                 <span class="player"></span>
