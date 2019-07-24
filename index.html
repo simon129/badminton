@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Badminton v1906261700</title>
+    <title>Badminton v1907241757</title>
     <script src="https://code.jquery.com/jquery-3.4.0.slim.min.js"></script>
     <script>
         const GAME = {
@@ -247,7 +247,6 @@
             [
                 { name: 'Jack', active: true },
                 { name: '逸涵', active: true },
-                { name: 'Flora', active: true },
                 { name: 'Simon', active: true },
                 { name: 'Fred', active: true },
                 { name: 'Eric', active: true },
@@ -256,21 +255,19 @@
                 { name: 'Tony', active: true },
                 { name: 'Bryan', active: true },
                 { name: 'Amy', active: true },
-                { name: 'Eason', active: true },
+                { name: 'Evan', active: true },
                 { name: 'Landice', active: true },
+                { name: 'Hogan', active: true },
+                { name: 'Jerry', active: true },
+                { name: 'Carrie', active: true },
+                { name: 'Trista (姿妤)', active: true },
 
+                { name: 'Flora (曉楓)', active: false },
                 { name: 'FS', active: false },
                 { name: 'Rex', active: false },
                 { name: 'Hester', active: false },
                 { name: 'Smart', active: false },
                 { name: '黑黑', active: false },
-                { name: 'Andy.Li', active: false },
-                { name: 'Charlotte', active: false },
-                { name: 'Julie', active: false },
-                { name: 'Irina', active: false },
-                { name: 'Yuki', active: false },
-                { name: 'Sasha', active: false },
-                { name: 'Crystal', active: false },
             ].forEach(p => {
                 var clone = $tr.clone()
                     .find('.active').prop('checked', p.active).end()
@@ -425,11 +422,10 @@
 				var data = document.querySelector("#playerNameData").value
 				console.log("get player data : " + data)
 				var startPos = data.indexOf('):')
-				var endPos = data.indexOf('===')
-				if(startPos < 0 || endPos < 0){
+				if(startPos < 0){
 					alert('格式不符!!')
 				} else {
-					var players = data.substring(startPos+2, endPos)
+					var players = data.substring(startPos+2)
 										.split('\n')
 										.filter(n => n !== "" && n.indexOf(':') === -1)
 					console.log(players)
