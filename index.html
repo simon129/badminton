@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Badminton</title>
     <script src="https://code.jquery.com/jquery-3.4.0.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.1/axios.min.js"></script>
     <script>
         // make [].shuffle() chainable
         Array.prototype.shuffle = function () {
@@ -112,6 +113,10 @@
                         });
 
                     console.log('court', c.id, ', players', c.players);
+
+                    axios.post('https://simon-pi.duckdns.org:9876/notify', {
+                        names: c.players.map(p => p.name),
+                    }).then(x => console.log(x)).catch(e => { console.error(e) })
                 });
 
                 return courts;
@@ -201,18 +206,21 @@
             [
                 { name: 'Jack', active: true },
                 { name: '逸涵', active: true },
-                { name: 'Flora', active: true },
                 { name: 'Simon', active: true },
                 { name: 'Fred', active: true },
                 { name: 'Eric', active: true },
                 { name: '書汶', active: true },
-                { name: 'Dennis', active: true },
-                { name: 'Tony', active: true },
+                { name: 'Dennis', active: true }, 
+                { name: '書汶', active: true },
                 { name: 'Bryan', active: true },
                 { name: 'Amy', active: true },
-                { name: 'Eason', active: true },
-                { name: 'Landice', active: true },
+                { name: 'Evan', active: true },
+                { name: 'Hogan', active: true },
+                { name: 'Jerry', active: true },
+                { name: 'Sandy', active: true },
+                { name: 'Wayne', active: true },
 
+                { name: 'Tony', active: false },
                 { name: 'FS', active: false },
                 { name: 'Rex', active: false },
                 { name: 'Hester', active: false },
