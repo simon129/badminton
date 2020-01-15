@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <title>Badminton v1907241757</title>
     <script src="https://code.jquery.com/jquery-3.4.0.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.1/axios.min.js"></script>
     <script>
         const GAME = {
             /* 玩家
@@ -107,7 +108,12 @@
 				ps[1].paired.push(ps[0].name)
 				ps[2].paired.push(ps[3].name)
 				ps[3].paired.push(ps[2].name)
-
+ 			
+		    		// 推播通知 (只有禮拜三2000~2200 會有效)
+		    		axios.post('https://simon-pi.duckdns.org:9876/notify', {
+                        		names: c.players.map(p => p.name),
+                    		}).catch(e => console.error(e))
+		    
 				console.log('court', c.id, ', players', c.players)
 
                 return [c].concat(emptyCourts.length > 1 ? this.nextGame() : [])
