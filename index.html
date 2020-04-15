@@ -127,7 +127,7 @@
                         var friendIndex = [1, 0, 3, 2][i];
                         p.friends.push(ary[friendIndex].name);
 
-                        var enemies = (i > 2 ? ary.slice(0, 2) : ary.slice(2, 4)).map(e => e.name);
+                        var enemies = (i > 1 ? ary.slice(0, 2) : ary.slice(2, 4)).map(e => e.name);
                         p.enemies.push(...enemies)
                     })
 
