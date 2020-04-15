@@ -157,31 +157,31 @@
 
                 var players = this.players
                     .filter(p => !p.isPlaying)                      // 放空的人
-                // .reduce((ary, p) => {
-                //     /* 
-                //         照場次放到籃子裡面, array index x 表示玩過x 場的玩家們
-                //         [
-                //             [{玩過0次},{玩過0次}],
-                //             ,
-                //             [{玩過2次}]
-                //             ,
-                //             ,
-                //             [{玩過5次},{玩過5次},{玩過5次},{玩過5次}],
-                //         ]
-                //     */
-                //     var index = p.playCount;
-                //     (ary[index] = ary[index] || []).push(p);
-                //     return ary;
-                // }, [])
-                // .reduce((ary, players) => {
-                //     // 人數不夠就把下一籃的人random 後倒進去 (~砍掉超過的部分~ 不砍了)
-                //     if (ary.length < courtCount * 4) {
-                //         ary.push(...players.shuffle())
-                //         // return ary.slice(0, courtCount * 4);
-                //     }
+                    .reduce((ary, p) => {
+                        /* 
+                            照場次放到籃子裡面, array index x 表示玩過x 場的玩家們
+                            [
+                                [{玩過0次},{玩過0次}],
+                                ,
+                                [{玩過2次}]
+                                ,
+                                ,
+                                [{玩過5次},{玩過5次},{玩過5次},{玩過5次}],
+                            ]
+                        */
+                        var index = p.playCount;
+                        (ary[index] = ary[index] || []).push(p);
+                        return ary;
+                    }, [])
+                    .reduce((ary, players) => {
+                        // 人數不夠就把下一籃的人random 後倒進去 (~砍掉超過的部分~ 不砍了)
+                        if (ary.length < courtCount * 4) {
+                            ary.push(...players.shuffle())
+                            // return ary.slice(0, courtCount * 4);
+                        }
 
-                //     return ary;
-                // }, [])
+                        return ary;
+                    }, [])
 
                 // 兩人一隊
                 // teams = [[1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], [1, 9], [1, 10], [1, 11], ...]
