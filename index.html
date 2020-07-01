@@ -281,7 +281,7 @@
             [
                 { name: 'Jack', active: true },
                 { name: '逸涵', active: true },
-                { name: 'Fred', active: true },
+                { name: 'Landice', active: true },
                 { name: 'Eric', active: true },
                 { name: '書汶', active: true },
                 { name: 'Dennis', active: true },
@@ -295,10 +295,14 @@
                 { name: 'Wayne', active: true },
                 { name: 'Jessie', active: true },
 
+                { name: 'Fred', active: false },
                 { name: 'Simon', active: false },
                 { name: 'Kai', active: false },
                 { name: 'Peter', active: false },
                 { name: 'Tony', active: false },
+                { name: 'Flora', active: false },
+                { name: 'Maggie', active: false },
+                { name: 'Johnny', active: false },
                 { name: 'FS', active: false },
                 { name: 'Rex', active: false },
                 { name: 'Hester', active: false },
@@ -469,6 +473,24 @@
                 var courtId = $court.attr('id');
                 console.log('finish', courtId);
 
+                // 找出贏的人
+                var names = $court
+                    .find('.player')
+                    .map(function () {
+                        return $(this).text();
+                    })
+                    .get();
+                if ($(this).hasClass('revert')) {
+                    names.push(names.shift());
+                    names.push(names.shift());
+                }
+                console.log('win', names)
+                if (location.search.length == 0) {
+                    axios.post('https://simon-pi.duckdns.org:9876/winlose', {
+                        names,
+                    }).then(x => console.log(x)).catch(e => { console.error(e) })
+                }
+
                 // 整理場地UI
                 $court
                     .find('.finish').hide().end()
@@ -501,15 +523,17 @@
 
         <!-- 場地template -->
         <div class="court" style="display:none;">
-            <input type="button" value="終" class="finish">
+            <!-- <input type="button" value="終" class="finish"> -->
             <div class="team">
                 <span class="player"></span>
                 <span class="player"></span>
+                <input type="button" value="贏" class="finish win">
             </div>
             <span>vs</span>
             <div class="team">
                 <span class="player"></span>
                 <span class="player"></span>
+                <input type="button" value="贏" class="finish win revert">
             </div>
         </div>
     </div>
