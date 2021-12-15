@@ -128,7 +128,7 @@
 
                         // 推撥通知
                         if (location.search.length == 0) {
-                            axios.post('https://simon-pi.duckdns.org:9876/notify', {
+                            axios.post('https://simon-badminton.duckdns.org:9876/notify', {
                                 names: court.players.map(p => p.name),
                             }).then(x => console.log(x)).catch(e => { console.error(e) })
                         }
@@ -500,7 +500,7 @@
                 }
                 console.log('win', names)
                 if (location.search.length == 0) {
-                    axios.post('https://simon-pi.duckdns.org:9876/winlose', {
+                    axios.post('https://simon-badminton.duckdns.org:9876/winlose', {
                         names,
                     }).then(x => console.log(x)).catch(e => { console.error(e) })
                 }
