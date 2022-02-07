@@ -275,10 +275,10 @@
             console.log('getPlayersFromUI', GAME.players)
         }
 
-        function fillDefaultPlayers() {
+        function fillDefaultPlayers(ary) {
             var $tr = $('table.players tbody tr');
 
-            [
+            (ary || [
                 // 2021 第四季 
                 // 季打
                 { name: 'Jack', active: true },
@@ -307,7 +307,7 @@
                 { name: 'Kai', active: false },
                 { name: 'Johnny', active: false },
                 { name: 'Andy.Li', active: false },
-                
+
                 // 零打
                 { name: 'Flora', active: false },
                 { name: 'Fred', active: false },
@@ -329,7 +329,7 @@
                 { name: 'Yuki', active: false },
                 { name: 'Sasha', active: false },
                 { name: 'Crystal', active: false },
-            ].forEach(p => {
+            ]).forEach(p => {
                 var clone = $tr.clone()
                     .find('.active').prop('checked', p.active).end()
                     .find('.playCount').val(0).end()
@@ -348,8 +348,10 @@
         }
 
         $(document).ready(function () {
-            // 從預設值填到玩家UI
-            fillDefaultPlayers();
+            // 從網路抓, 壞掉了話就是預設值 填到玩家UI
+            axios.get('https://script.google.com/macros/s/AKfycbwIF1ptABJsuteyqagAz_nRiGNWID4YUwcdXqimD6vWEmjH_6DqZhc4rX6Vu7Izhy8-jw/exec?list=1')
+                .then(x => fillDefaultPlayers(x.data))
+                .catch(() => fillDefaultPlayers())
 
             // 測試
             location.search.length && $('input.simulate').show();
