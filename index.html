@@ -349,7 +349,8 @@
 
         $(document).ready(function () {
             // 從網路抓, 壞掉了話就是預設值 填到玩家UI
-            axios.get('https://script.google.com/macros/s/AKfycbwIF1ptABJsuteyqagAz_nRiGNWID4YUwcdXqimD6vWEmjH_6DqZhc4rX6Vu7Izhy8-jw/exec?list=1')
+            // axios.get('https://script.google.com/macros/s/AKfycbwIF1ptABJsuteyqagAz_nRiGNWID4YUwcdXqimD6vWEmjH_6DqZhc4rX6Vu7Izhy8-jw/exec?list=1')
+            axios.get('https://script.google.com/macros/s/AKfycbyDc2Lh2n7g8BSYy08dzKr-OyOHDxHpdkUF7447SCTS-KU6zNhzBN1U8XrauXslpxKbGw/exec?list=1')
                 .then(x => fillDefaultPlayers(x.data))
                 .catch(() => fillDefaultPlayers())
 
